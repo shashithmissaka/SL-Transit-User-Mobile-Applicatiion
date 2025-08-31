@@ -169,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             children: [
               // Top AppBar area
+              // This is a comment
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(

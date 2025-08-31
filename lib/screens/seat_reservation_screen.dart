@@ -111,22 +111,6 @@ class _SeatReservationScreenState extends State<SeatReservationScreen> {
         final Map<String, dynamic> seatsData = Map<String, dynamic>.from(
             event.snapshot.value as Map? ?? {});
 
-        // Merge paid info if numeric keys exist
-        seatsData.forEach((key, value) {
-          if (key != "seat1" && int.tryParse(key) != null && value is Map) {
-            // numeric keys store payment info
-            seatsData.forEach((seatKey, seatInfo) {
-              if (seatInfo is Map && seatInfo["userId"] != null) {
-                // attach paymentStatus & paidAt
-                if (seatInfo["userId"] == value["userId"]) {
-                  seatInfo["paymentStatus"] = value["paymentStatus"];
-                  seatInfo["paidAt"] = value["paidAt"];
-                }
-              }
-            });
-          }
-        });
-
         setState(() {
           _seats = seatsData;
         });
@@ -143,7 +127,6 @@ class _SeatReservationScreenState extends State<SeatReservationScreen> {
       }
     });
   }
-
 
   /// 🪑 Select/unselect a seat
   void _toggleSeatSelection(String seatKey) {
@@ -204,7 +187,7 @@ class _SeatReservationScreenState extends State<SeatReservationScreen> {
           "fare": _farePerSeat,
           "bookedAt": DateTime.now().millisecondsSinceEpoch,
         });
-        bookedSeats.add(seatKey.replaceAll("seat", ""));
+        bookedSeats.add(seatKey); // ✅ keep full seatKey
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("$seatKey was already booked")),
@@ -228,7 +211,7 @@ class _SeatReservationScreenState extends State<SeatReservationScreen> {
         builder: (_) => PaymentScreen(
           busId: widget.busId,
           userId: widget.userId,
-          bookedSeats: bookedSeats,
+          bookedSeats: bookedSeats, // ✅ full keys
           totalFare: _farePerSeat * bookedSeats.length,
           startCity: widget.startCity,
           endCity: widget.endCity,
@@ -269,10 +252,7 @@ class _SeatReservationScreenState extends State<SeatReservationScreen> {
     return Colors.red; // booked by someone else
   }
 
-
-
   /// ✅ Get seats booked by this user
-  /// ✅ Get seats booked by this user (including paid)
   String _getBookedSeats() {
     List<String> bookedSeats = [];
     _seats.forEach((key, value) {
@@ -296,7 +276,7 @@ class _SeatReservationScreenState extends State<SeatReservationScreen> {
       if (value is Map) {
         final userId = value["userId"]?.toString();
         final status = value["status"]?.toString() ?? "";
-        final paymentStatus = value["paymentStatus"]?.toString() ?? "unpaidvoi";
+        final paymentStatus = value["paymentStatus"]?.toString() ?? "unpaid";
         final fare = int.tryParse(value["fare"]?.toString() ?? "0") ?? 0;
 
         if (userId == widget.userId && (status == "booked" || paymentStatus == "paid")) {

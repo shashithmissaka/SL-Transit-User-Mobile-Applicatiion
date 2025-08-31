@@ -32,35 +32,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _listenToSeatUpdates();  // Listen for updates to seats
+    // ✅ Listener not needed; SeatReservationScreen already listens for changes
   }
 
-  // Listen to real-time updates to seat payment status
-  void _listenToSeatUpdates() {
-    _dbReservations.child(widget.busId).onValue.listen((event) {
-      if (event.snapshot.value != null) {
-        final Map<String, dynamic> seatsData = Map<String, dynamic>.from(
-            event.snapshot.value as Map? ?? {});
-
-        print("Updated seats data: $seatsData");
-
-        // After data changes, force UI update
-        setState(() {
-          widget.bookedSeats.clear(); // Clear and refresh the bookedSeats
-          seatsData.forEach((key, value) {
-            if (value["paymentStatus"] == "paid") {
-              widget.bookedSeats.add(key.replaceAll("seat", ""));
-            }
-          });
-        });
-      }
-    });
-  }
-
-
-
-
-  // In the _processPayment function
+  // 💳 Process payment and update Firebase
   Future<void> _processPayment() async {
     setState(() => _isPaying = true);
 
@@ -110,8 +85,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     Navigator.pop(context, true); // return to SeatReservationScreen
   }
-
-
 
   @override
   Widget build(BuildContext context) {
