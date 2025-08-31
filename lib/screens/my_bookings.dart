@@ -32,10 +32,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             if (seatInfo is Map) {
               final status = seatInfo["status"]?.toString() ?? "";
               final userId = seatInfo["userId"]?.toString() ?? "";
+              final paymentStatus = seatInfo["paymentStatus"]?.toString() ?? "unpaid"; // ✅ read directly
+
               if (userId == widget.userId && status == "booked") {
-                final paymentStatus =
-                    seatsData[seatKey.replaceAll("seat", "")]?["paymentStatus"] ??
-                        "unpaid";
                 bookings.add({
                   "busId": busId,
                   "seatKey": seatKey,
@@ -43,7 +42,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   "endCity": seatInfo["endCity"],
                   "fare": seatInfo["fare"],
                   "bookedAt": seatInfo["bookedAt"],
-                  "paymentStatus": paymentStatus,
+                  "paymentStatus": paymentStatus, // ✅ fixed
                 });
               }
             }
@@ -56,6 +55,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
