@@ -7,6 +7,8 @@ import 'route_search_screen.dart';
 import 'bus_details_screen.dart';
 import 'login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled/screens/my_payments.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -21,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   LatLng? _currentPosition;
   Map<MarkerId, Marker> _markers = {};
   Set<Polyline> _polylines = {};
+  int _totalPaidAmount = 0;
 
   String? startCity;
   String? endCity;
@@ -31,8 +34,35 @@ class _HomeScreenState extends State<HomeScreen> {
     _determinePosition();
     FirebaseService.attachRealtimeListeners(_refreshMarkers);
   }
+  Future<void> _loadTotalPayments() async {
+    final dbReservations = FirebaseDatabase.instance.ref("reservations");
+    final snapshot = await dbReservations.get();
+    int total = 0;
+
+    final data = snapshot.value as Map<dynamic, dynamic>? ?? {};
+    data.forEach((busId, seatsData) {
+      if (seatsData is Map) {
+        seatsData.forEach((seatKey, seatInfo) {
+          if (seatInfo is Map) {
+            final userId = seatInfo["userId"]?.toString() ?? "";
+            final paymentStatus = seatInfo["paymentStatus"]?.toString() ?? "unpaid";
+            final fare = int.tryParse(seatInfo["fare"]?.toString() ?? "0") ?? 0;
+            if (userId == widget.userName && paymentStatus == "paid") {
+              total += fare;
+            }
+          }
+        });
+      }
+    });
+
+    setState(() {
+      _totalPaidAmount = total;
+    });
+  }
+
 
   Future<void> _determinePosition() async {
+    _loadTotalPayments();
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
 
@@ -170,6 +200,54 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // Top AppBar area
               // This is a comment
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Welcome, ${widget.userName}",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          "Total Paid: LKR $_totalPaidAmount",
+                          style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MyPaymentsScreen(userId: widget.userName),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.payment, color: Colors.white),
+                          tooltip: "My Payments",
+                        ),
+                        IconButton(
+                          onPressed: _showLogoutDialog,
+                          icon: const Icon(Icons.logout, color: Colors.white),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
