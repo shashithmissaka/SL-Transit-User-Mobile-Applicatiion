@@ -1,141 +1,138 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; // For charts
+import 'package:firebase_database/firebase_database.dart';
+import 'login_screen.dart';
+import 'ReservationsScreen.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  int totalBuses = 0;
+  int totalReservations = 0;
+  int totalPayments = 0;
+
+  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchStats();
+  }
+
+  Future<void> fetchStats() async {
+    // 🔹 Buses
+    final busesSnap = await dbRef.child("buses").get();
+    if (busesSnap.exists) {
+      setState(() {
+        totalBuses = (busesSnap.value as Map).length;
+      });
+    }
+
+    // 🔹 Reservations
+    final reservationsSnap = await dbRef.child("reservations").get();
+    if (reservationsSnap.exists) {
+      int resCount = 0;
+      (reservationsSnap.value as Map).forEach((busId, seats) {
+        resCount += (seats as Map).length;
+      });
+      setState(() {
+        totalReservations = resCount;
+      });
+    }
+
+    // 🔹 Payments
+    final paymentsSnap = await dbRef.child("payments").get();
+    if (paymentsSnap.exists) {
+      int paidCount = 0;
+      (paymentsSnap.value as Map).forEach((key, value) {
+        if (value["paymentStatus"] == "paid") {
+          paidCount++;
+        }
+      });
+      setState(() {
+        totalPayments = paidCount;
+      });
+    }
+  }
+
+  void _logout() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
         backgroundColor: Colors.blue,
-        elevation: 0,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            // Top Cards
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _dashboardCard("New Orders", "12", Colors.red),
-                _dashboardCard("Pending Tasks", "None", Colors.blue),
-                _dashboardCard("Revenue", "\$35K", Colors.orange),
-                _dashboardCard("Active Users", "23", Colors.green),
-
-
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Stats Charts
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Weekly Stats", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 200,
-                    child: LineChart(
-                      LineChartData(
-                        gridData: FlGridData(show: true),
-                        borderData: FlBorderData(show: true),
-                        lineBarsData: [
-                          LineChartBarData(
-                            spots: const [
-                              FlSpot(0, 1),
-                              FlSpot(1, 1.5),
-                              FlSpot(2, 1.4),
-                              FlSpot(3, 3.4),
-                              FlSpot(4, 2),
-                              FlSpot(5, 2.2),
-                              FlSpot(6, 1.8),
-                            ],
-                            isCurved: true,
-                            barWidth: 3,
-                            color: Colors.blue,   // ✅ correct
-                            dotData: FlDotData(show: true),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // User/Referral Stats
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("User & Referral Stats", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _smallStatCard("Followers", "2,531"),
-                      _smallStatCard("Likes", "25,351"),
-                      _smallStatCard("Comments", "1,351"),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _dashboardCard(String title, String value, Color color) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.all(4),
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            _buildStatCard("Buses", totalBuses.toString(), Colors.blue),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReservationsScreen()),
+                );
+              },
+              child: _buildStatCard("Reservations", totalReservations.toString(), Colors.orange),
+            ),
+            _buildStatCard("Payments", totalPayments.toString(), Colors.green),
           ],
         ),
       ),
     );
   }
 
-  Widget _smallStatCard(String title, String value) {
+  Widget _buildStatCard(String title, String value, Color color) {
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: color.withOpacity(0.1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
         ),
       ),
     );
