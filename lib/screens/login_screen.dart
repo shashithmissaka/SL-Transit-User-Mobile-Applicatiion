@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
+import 'AdminDashboardScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   final int style; // 1 = Background Image, 2 = Glassmorphism, 3 = Side Panel
@@ -28,6 +29,18 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
 
     try {
+      // 🔹 Hardcoded admin login check
+      if (_emailController.text.trim() == "admin" &&
+          _passwordController.text.trim() == "admin") {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+        );
+        return; // stop further execution
+      }
+
+      // 🔹 Normal Firebase login
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
         email: _emailController.text.trim(),

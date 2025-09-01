@@ -25,6 +25,7 @@ dependencies:
   http: ^1.5.0
   flutter_polyline_points: ^3.0.1
   shared_preferences: ^2.5.3
+  fl_chart: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -37,3 +38,6 @@ flutter:
     - assets/images/bus1.png
     - assets/images/bus2.png
     - assets/images/bus3.png
+    - assets/bg_login.jpg
+    - assets/login_illustration.png
+    - assets/bg_register.jpg
