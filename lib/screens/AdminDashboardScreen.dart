@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'login_screen.dart';
-import 'ReservationsScreen.dart';
+// import your admin screens here
+// import 'admin_users_screen.dart';
+// import 'admin_buses_screen.dart';
+// import 'admin_reservations_screen.dart';
+// import 'admin_payments_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -11,59 +16,97 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  int totalBuses = 0;
-  int totalReservations = 0;
-  int totalPayments = 0;
-
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+  int _usersCount = 0;
+  int _busesCount = 0;
+  int _reservationsCount = 0;
+  int _paymentsCount = 0;
 
   @override
   void initState() {
     super.initState();
-    fetchStats();
+    _loadCounts();
   }
 
-  Future<void> fetchStats() async {
+  Future<void> _loadCounts() async {
+    // 🔹 Users
+    final usersSnap = await FirebaseDatabase.instance.ref("users").get();
+    final usersCount = (usersSnap.value as Map?)?.length ?? 0;
+
     // 🔹 Buses
-    final busesSnap = await dbRef.child("buses").get();
-    if (busesSnap.exists) {
-      setState(() {
-        totalBuses = (busesSnap.value as Map).length;
-      });
-    }
+    final busesSnap = await FirebaseDatabase.instance.ref("buses").get();
+    final busesCount = (busesSnap.value as Map?)?.length ?? 0;
 
-    // 🔹 Reservations
-    final reservationsSnap = await dbRef.child("reservations").get();
-    if (reservationsSnap.exists) {
-      int resCount = 0;
-      (reservationsSnap.value as Map).forEach((busId, seats) {
-        resCount += (seats as Map).length;
-      });
-      setState(() {
-        totalReservations = resCount;
-      });
-    }
+    // 🔹 Reservations & Payments
+    final reservationsSnap = await FirebaseDatabase.instance.ref("reservations").get();
+    final reservationsData = reservationsSnap.value as Map? ?? {};
+    int reservationsCount = 0;
+    int paymentsCount = 0;
 
-    // 🔹 Payments
-    final paymentsSnap = await dbRef.child("payments").get();
-    if (paymentsSnap.exists) {
-      int paidCount = 0;
-      (paymentsSnap.value as Map).forEach((key, value) {
-        if (value["paymentStatus"] == "paid") {
-          paidCount++;
-        }
-      });
-      setState(() {
-        totalPayments = paidCount;
-      });
-    }
+    reservationsData.forEach((busId, seatsData) {
+      if (seatsData is Map) {
+        seatsData.forEach((seatKey, seatInfo) {
+          if (seatInfo is Map) {
+            reservationsCount++;
+            if ((seatInfo['paymentStatus'] ?? '') == 'paid') {
+              paymentsCount++;
+            }
+          }
+        });
+      }
+    });
+
+    setState(() {
+      _usersCount = usersCount;
+      _busesCount = busesCount;
+      _reservationsCount = reservationsCount;
+      _paymentsCount = paymentsCount;
+    });
   }
 
-  void _logout() {
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
           (route) => false,
+    );
+  }
+
+  Widget _buildStatCard(String title, int count, Color color, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Card(
+          color: color.withOpacity(0.1),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "$count",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -72,67 +115,42 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
-        backgroundColor: Colors.blue,
-        centerTitle: true,
         actions: [
           IconButton(
-            onPressed: _logout,
             icon: const Icon(Icons.logout),
+            onPressed: _logout,
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        padding: const EdgeInsets.all(12),
+        child: Column(
           children: [
-            _buildStatCard("Buses", totalBuses.toString(), Colors.blue),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ReservationsScreen()),
-                );
-              },
-              child: _buildStatCard("Reservations", totalReservations.toString(), Colors.orange),
+            Row(
+              children: [
+                _buildStatCard("Users", _usersCount, Colors.blue, () {
+                  // TODO: Navigate to AdminUsersScreen
+                  // Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
+                }),
+                const SizedBox(width: 8),
+                _buildStatCard("Buses", _busesCount, Colors.green, () {
+                  // TODO: Navigate to AdminBusesScreen
+                }),
+              ],
             ),
-            _buildStatCard("Payments", totalPayments.toString(), Colors.green),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _buildStatCard("Reservations", _reservationsCount, Colors.orange, () {
+                  // TODO: Navigate to AdminReservationsScreen
+                }),
+                const SizedBox(width: 8),
+                _buildStatCard("Payments", _paymentsCount, Colors.purple, () {
+                  // TODO: Navigate to AdminPaymentsScreen
+                }),
+              ],
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, Color color) {
-    return Expanded(
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: color.withOpacity(0.1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
         ),
       ),
     );
