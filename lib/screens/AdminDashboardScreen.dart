@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'login_screen.dart';
-// import your admin screens here
-// import 'admin_users_screen.dart';
-// import 'admin_buses_screen.dart';
-// import 'admin_reservations_screen.dart';
-// import 'admin_payments_screen.dart';
+import 'adminUsers.dart';
+import 'adminBuses.dart';
+import 'adminReservations.dart';
+import 'adminPayments.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -129,12 +128,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Row(
               children: [
                 _buildStatCard("Users", _usersCount, Colors.blue, () {
-                  // TODO: Navigate to AdminUsersScreen
-                  // Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
                 }),
                 const SizedBox(width: 8),
                 _buildStatCard("Buses", _busesCount, Colors.green, () {
-                  // TODO: Navigate to AdminBusesScreen
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminBusesScreen()));
+
                 }),
               ],
             ),
@@ -142,11 +141,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Row(
               children: [
                 _buildStatCard("Reservations", _reservationsCount, Colors.orange, () {
-                  // TODO: Navigate to AdminReservationsScreen
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminReservationsScreen()));
+
                 }),
                 const SizedBox(width: 8),
                 _buildStatCard("Payments", _paymentsCount, Colors.purple, () {
-                  // TODO: Navigate to AdminPaymentsScreen
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPaymentsScreen()));
+
                 }),
               ],
             ),
