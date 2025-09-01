@@ -205,6 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Welcome + Total Paid
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -224,6 +225,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+
+                    // Buttons
                     Row(
                       children: [
                         IconButton(
@@ -243,29 +246,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: const Icon(Icons.logout, color: Colors.white),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Welcome, ${widget.userName}",
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    IconButton(
-                        onPressed: _showLogoutDialog,
-                        icon: const Icon(Icons.logout, color: Colors.white))
-                  ],
-                ),
-              ),
               // Modern "Where to?" search bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -14,7 +14,7 @@ class _MyPaymentsScreenState extends State<MyPaymentsScreen> {
   FirebaseDatabase.instance.ref("reservations");
 
   List<Map<String, dynamic>> _payments = [];
-  int _totalPaid = 0; // ✅ total paid amount
+  int _totalPaid = 0; // total paid amount
 
   @override
   void initState() {
@@ -26,36 +26,40 @@ class _MyPaymentsScreenState extends State<MyPaymentsScreen> {
     _dbReservations.onValue.listen((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>? ?? {};
       List<Map<String, dynamic>> payments = [];
-      int total = 0; // temporary total
+      int total = 0;
 
       data.forEach((busId, seatsData) {
         if (seatsData is Map) {
           seatsData.forEach((seatKey, seatInfo) {
             if (seatInfo is Map) {
               final userId = seatInfo["userId"]?.toString() ?? "";
-              final paymentStatus = seatInfo["paymentStatus"]?.toString() ?? "unpaid";
+              final paymentStatus =
+                  seatInfo["paymentStatus"]?.toString() ?? "unpaid";
+
               if (userId == widget.userId && paymentStatus == "paid") {
                 payments.add({
                   "busId": busId,
                   "seatKey": seatKey,
-                  "startCity": seatInfo["startCity"],
-                  "endCity": seatInfo["endCity"],
-                  "fare": seatInfo["fare"],
-                  "paidAt": seatInfo["paidAt"],
+                  "startCity": seatInfo["startCity"] ?? "",
+                  "endCity": seatInfo["endCity"] ?? "",
+                  "fare": seatInfo["fare"] ?? 0,
+                  "paidAt": seatInfo["paidAt"] ?? 0,
                 });
-                total += int.tryParse(seatInfo["fare"]?.toString() ?? "0") ?? 0; // sum fare
+
+                total += int.tryParse(seatInfo["fare"]?.toString() ?? "0") ?? 0;
               }
             }
           });
         }
       });
 
-      // ✅ sort payments by paidAt (newest first)
-      payments.sort((a, b) => (b['paidAt'] ?? 0).compareTo(a['paidAt'] ?? 0));
+      // Sort by paidAt (newest first)
+      payments.sort((a, b) =>
+          (b['paidAt'] ?? 0).compareTo(a['paidAt'] ?? 0));
 
       setState(() {
         _payments = payments;
-        _totalPaid = total; // update total paid
+        _totalPaid = total;
       });
     });
   }
@@ -68,7 +72,7 @@ class _MyPaymentsScreenState extends State<MyPaymentsScreen> {
           ? const Center(child: Text("No payments found"))
           : Column(
         children: [
-          // ✅ Total paid amount
+          // Total paid amount
           Container(
             width: double.infinity,
             color: Colors.blueGrey[50],
@@ -88,33 +92,45 @@ class _MyPaymentsScreenState extends State<MyPaymentsScreen> {
               itemCount: _payments.length,
               itemBuilder: (context, index) {
                 final payment = _payments[index];
-                final date = DateTime.fromMillisecondsSinceEpoch(payment['paidAt']);
+                final paidAt = payment['paidAt'] ?? 0;
+                final date = (paidAt > 0)
+                    ? DateTime.fromMillisecondsSinceEpoch(paidAt)
+                    : null;
 
-                // ✅ Highlight the latest payment (first item in list)
                 final bool isLatest = index == 0;
 
                 return Card(
-                  color: isLatest ? Colors.deepPurple[100] : null, // highlight latest
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  color: isLatest ? Colors.deepPurple[100] : null,
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
                   child: ListTile(
                     title: Text(
                       "Bus: ${payment['busId']} | Seat: ${payment['seatKey']}",
                       style: TextStyle(
-                        fontWeight: isLatest ? FontWeight.bold : FontWeight.normal,
-                        color: isLatest ? Colors.deepPurple[900] : Colors.black,
+                        fontWeight: isLatest
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color:
+                        isLatest ? Colors.deepPurple[900] : Colors.black,
                       ),
                     ),
                     subtitle: Text(
                       "Route: ${payment['startCity']} → ${payment['endCity']} | Fare: LKR ${payment['fare']}",
                       style: TextStyle(
-                        color: isLatest ? Colors.deepPurple[700] : Colors.black87,
+                        color: isLatest
+                            ? Colors.deepPurple[700]
+                            : Colors.black87,
                       ),
                     ),
                     trailing: Text(
-                      "${date.day}/${date.month}/${date.year} "
-                          "${date.hour}:${date.minute.toString().padLeft(2, '0')}",
+                      date != null
+                          ? "${date.day}/${date.month}/${date.year} "
+                          "${date.hour}:${date.minute.toString().padLeft(2, '0')}"
+                          : "Unknown",
                       style: TextStyle(
-                        fontWeight: isLatest ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isLatest
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isLatest ? Colors.deepPurple : Colors.grey[700],
                       ),
                     ),

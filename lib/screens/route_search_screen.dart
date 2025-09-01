@@ -326,6 +326,27 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Top row with back button
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Navigator.pop(context); // goes back to HomeScreen
+                              },
+                              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Search Route",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
                         const Text("From",
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w600)),
@@ -334,8 +355,7 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                           controller: fromController,
                           decoration: const InputDecoration(
                             hintText: "Enter starting location",
-                            prefixIcon:
-                            Icon(Icons.location_on, color: Colors.blue),
+                            prefixIcon: Icon(Icons.location_on, color: Colors.blue),
                             border: OutlineInputBorder(),
                           ),
                           onChanged: (_) => setState(() {}),
@@ -347,8 +367,7 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                               children: towns
                                   .where((town) => town
                                   .toLowerCase()
-                                  .contains(fromController.text
-                                  .toLowerCase()))
+                                  .contains(fromController.text.toLowerCase()))
                                   .map((town) => ListTile(
                                 title: Text(town),
                                 onTap: () {
@@ -369,8 +388,7 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                             controller: toController,
                             decoration: const InputDecoration(
                               hintText: "Enter destination",
-                              prefixIcon:
-                              Icon(Icons.flag, color: Colors.green),
+                              prefixIcon: Icon(Icons.flag, color: Colors.green),
                               border: OutlineInputBorder(),
                             ),
                             onChanged: (_) => setState(() {}),
@@ -382,8 +400,7 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                                 children: towns
                                     .where((town) => town
                                     .toLowerCase()
-                                    .contains(
-                                    toController.text.toLowerCase()))
+                                    .contains(toController.text.toLowerCase()))
                                     .map((town) => ListTile(
                                   title: Text(town),
                                   onTap: () {
@@ -402,8 +419,7 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
                             ),
@@ -411,8 +427,7 @@ class _RouteSearchScreenState extends State<RouteSearchScreen> {
                             icon: const Icon(Icons.search),
                             label: const Text("Search Buses",
                                 style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold)),
+                                    fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
                       ],
                     ),
